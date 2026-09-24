@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Order Details - ShopEasy</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="order-details-page">
+
+    <header>
+        <h1>ShopEasy</h1>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="orders.html">My Orders</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </nav>
+    </header>
+
+    <main class="order-details-container">
+
+        <h2>Order Details</h2>
+
+        <div id="orderDetails">
+            <p>Loading order...</p>
+        </div>
+
+    </main>
+
+
+    <script>
+
+        const API_URL = "http://localhost:5000/api";
+
+
+        async function loadOrderDetails() {
+
+            const token =
+                localStorage.getItem("shopEasyToken");
+
+
+            if (!token) {
+
+                alert("Please login first.");
+
+                window.location.href = "login.html";
+
+                return;
+            }
+
+
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+            const orderId =
+                params.get("id");
+
+
+            if (!orderId) {
+
+                document.getElementById(
+                    "orderDetails"
+                ).innerHTML = `
+                    <p>Order ID not found.</p>
+                `;
+
+                return;
+            }
+
+
+            try {
+
+                const response = await fetch(
+                    `${API_URL}/orders/${orderId}`,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    }
+                );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to load order"
+                    );
+
+                }
+
+
+                displayOrder(data);
+
+
+            } catch (error) {
+
+                console.error(
+                    "Order details error:",
+                    error
+                );
+
+
+                document.getElementById(
+                    "orderDetails"
+                ).innerHTML = `
+                    <div class="error-message">
+                        <h3>Unable to load order</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+
+            }
+
+        }
+
+function displayOrder(data) {
+
+    const order = data.order;
+    const items = data.items;
+
+    document.getElementById("orderDetails").innerHTML = `
+
+        <div class="order-details-card">
+
+            <!-- Order Header -->
+            <div class="order-details-header">
+
+                <div>
+                    <h3>Order #${order.id}</h3>
+
+                    <p class="order-date">
+                        Placed on:
+                        ${new Date(order.created_at).toLocaleDateString()}
+                    </p>
+                </div>
+
+                <span class="order-status">
+                    ${order.status}
+                </span>
+
+            </div>
+
+            <!-- Shipping Address -->
+<div class="order-shipping-section">
+
+    <h3>Shipping Address</h3>
+
+    <div class="shipping-details">
+
+        <p>
+            <strong>Full Name:</strong>
+            ${order.shipping_name || "-"}
+        </p>
+
+        <p>
+            <strong>Phone:</strong>
+            +977 ${order.shipping_phone || "-"}
+        </p>
+
+        <p>
+            <strong>Address:</strong>
+            ${order.shipping_address || "-"}
+        </p>
+
+        <p>
+            <strong>City / Municipality:</strong>
+            ${order.shipping_city || "-"}
+        </p>
+
+        <p>
+            <strong>District:</strong>
+            ${order.shipping_district || "-"}
+        </p>
+
+        <p>
+            <strong>Ward Number:</strong>
+            ${order.shipping_ward || "-"}
+        </p>
+
+        <p>
+            <strong>Postal Code:</strong>
+            ${order.shipping_pincode || "-"}
+        </p>
+
+    </div>
+
+</div>
+
+          
+            <!-- Products -->
+            <div class="order-products-section">
+
+                <h3>Order Items</h3>
+
+                ${items.map(item => `
+
+                    <div class="order-product-item">
+
+                        <div class="order-product-left">
+
+                            ${
+                                item.image_url
+                                ? `
+                                    <img
+                                        src="${item.image_url}"
+                                        alt="${item.name}"
+                                        class="order-product-image"
+                                    >
+                                `
+                                : `
+                                    <div class="order-product-image no-image">
+                                        📦
+                                    </div>
+                                `
+                            }
+
+                            <div class="order-product-info">
+
+                                <h4>
+                                    ${item.name}
+                                </h4>
+
+                                <p>
+                                    Quantity:
+                                    <strong>${item.quantity}</strong>
+                                </p>
+
+                                <p>
+                                    Price:
+                                    Rs. ${Number(item.price).toFixed(2)}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="order-product-subtotal">
+
+                            Rs.
+                            ${Number(item.subtotal).toFixed(2)}
+
+                        </div>
+
+                    </div>
+
+                `).join("")}
+
+            </div>
+
+
+            <!-- Summary -->
+            <div class="order-summary">
+
+                <div class="summary-row">
+
+                    <span>Subtotal</span>
+
+                    <strong>
+                        Rs. ${Number(order.total_amount).toFixed(2)}
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-row">
+
+                    <span>Shipping</span>
+
+                    <strong>Free</strong>
+
+                </div>
+
+
+                <div class="summary-total">
+
+                    <span>Total</span>
+
+                    <strong>
+                        Rs. ${Number(order.total_amount).toFixed(2)}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Back -->
+            <a
+                href="orders.html"
+                class="view-order-btn"
+            >
+                ← Back to My Orders
+            </a>
+
+        </div>
+
+    `;
+}
+
+
+        function logout() {
+
+            localStorage.removeItem(
+                "shopEasyToken"
+            );
+
+            localStorage.removeItem(
+                "shopEasyLoggedInUser"
+            );
+
+            window.location.href =
+                "login.html";
+        }
+
+
+        loadOrderDetails();
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Manage Products - ShopEasy</title>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header>
+      <h1>ShopEasy Admin</h1>
+
+      <nav>
+        <a href="admin.html">Dashboard</a>
+        <a href="index.html">Shop</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </nav>
+    </header>
+
+    <main class="admin-container">
+      <h2>Manage Products</h2>
+
+      <div id="admin-message"></div>
+
+      <!-- ADD PRODUCT -->
+
+      <section class="admin-card">
+        <h3>Add New Product</h3>
+
+        <form id="product-form">
+          <label for="product-name"> Product Name </label>
+
+          <input
+            type="text"
+            id="product-name"
+            placeholder="Enter product name"
+            required
+          />
+
+          <label for="product-description"> Description </label>
+
+          <textarea
+            id="product-description"
+            placeholder="Enter product description"
+            required
+          ></textarea>
+
+          <label for="product-price"> Price (Rs.) </label>
+
+          <input
+            type="number"
+            id="product-price"
+            min="0"
+            step="0.01"
+            placeholder="Enter price"
+            required
+          />
+
+          <label for="product-stock"> Stock </label>
+
+          <input
+            type="number"
+            id="product-stock"
+            min="0"
+            placeholder="Enter stock"
+            required
+          />
+
+          <label for="product-category"> Category </label>
+
+          <select id="product-category" required>
+            <option value="">Select Category</option>
+
+            <option value="1">Electronics</option>
+
+            <option value="2">Clothing</option>
+
+            <option value="3">Shoes</option>
+          </select>
+
+          <label for="product-image"> Image URL </label>
+
+          <input type="url" id="product-image" placeholder="Enter image URL" />
+
+          <button type="submit">Add Product</button>
+        </form>
+      </section>
+
+      <!-- EDIT PRODUCT FORM -->
+
+<section class="admin-card" id="edit-product-section" style="display: none;">
+
+    <h3>Edit Product</h3>
+
+    <form id="edit-product-form">
+
+        <input type="hidden" id="edit-product-id">
+
+        <label>Product Name</label>
+
+        <input
+            type="text"
+            id="edit-product-name"
+            required
+        >
+
+        <label>Description</label>
+
+        <textarea
+            id="edit-product-description"
+            required
+        ></textarea>
+
+        <label>Price (Rs.)</label>
+
+        <input
+            type="number"
+            id="edit-product-price"
+            min="0"
+            step="0.01"
+            required
+        >
+
+        <label>Stock</label>
+
+        <input
+            type="number"
+            id="edit-product-stock"
+            min="0"
+            required
+        >
+
+        <label>Category</label>
+
+        <select id="edit-product-category" required>
+            <option value="">Select Category</option>
+            <option value="1">Electronics</option>
+            <option value="2">Clothing</option>
+            <option value="3">Shoes</option>
+        </select>
+
+        <label>Image URL</label>
+
+        <input
+            type="url"
+            id="edit-product-image"
+        >
+
+        <button type="submit">
+            Save Changes
+        </button>
+
+        <button
+            type="button"
+            onclick="cancelEdit()"
+        >
+            Cancel
+        </button>
+
+    </form>
+
+</section>
+
+      <!-- PRODUCTS -->
+
+      <section class="admin-card">
+        <h3>All Products</h3>
+
+        <!-- PRODUCT SEARCH & FILTER -->
+
+<div class="product-filters">
+
+    <input
+        type="text"
+        id="product-search"
+        placeholder="Search products..."
+        oninput="filterProducts()"
+    >
+
+    <select
+        id="product-category-filter"
+        onchange="filterProducts()"
+    >
+        <option value="All">All Categories</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Clothing">Clothing</option>
+        <option value="Shoes">Shoes</option>
+    </select>
+
+</div>
+
+        <div id="products-list">
+          <p>Loading products...</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const API_URL = "http://localhost:5000/api";
+
+      const token = localStorage.getItem("shopEasyToken");
+
+      if (!token) {
+        alert("Please login first.");
+
+        window.location.href = "login.html";
+      }
+
+      // ==========================================
+      // LOAD PRODUCTS
+      // ==========================================
+
+      async function loadProducts() {
+        try {
+          const response = await fetch(`${API_URL}/products`);
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Unable to load products");
+          }
+             allProducts = data || []; 
+          displayProducts(data);
+        } catch (error) {
+          console.error(error);
+
+          document.getElementById("products-list").innerHTML = `
+                    <p class="error-message">
+                        ${error.message}
+                    </p>
+                `;
+        }
+      }
+
+      // ==========================================
+      // DISPLAY PRODUCTS
+      // ==========================================
+
+             // ==========================================
+// PRODUCT SEARCH & FILTER
+// ==========================================
+
+let allProducts = [];
+
+
+function filterProducts() {
+
+    const search =
+        document.getElementById("product-search")
+            .value
+            .toLowerCase()
+            .trim();
+
+    const selectedCategory =
+        document.getElementById(
+            "product-category-filter"
+        ).value;
+
+
+    const filteredProducts =
+        allProducts.filter(product => {
+
+            const matchesSearch =
+
+                (product.name || "")
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                String(product.id)
+                    .toLowerCase()
+                    .includes(search);
+
+
+            const matchesCategory =
+                selectedCategory === "All"
+                ||
+                (product.category || "")
+                    === selectedCategory;
+
+
+            return (
+                matchesSearch &&
+                matchesCategory
+            );
+
+        });
+
+
+    displayProducts(filteredProducts);
+
+}
+
+      function displayProducts(products) {
+        const container = document.getElementById("products-list");
+
+        if (!products || products.length === 0) {
+          container.innerHTML = "<p>No products found.</p>";
+
+          return;
+        }
+
+        container.innerHTML = products
+          .map(
+            (product) => `
+
+                   <div class="admin-product">
+
+                          <div>
+
+                              <h4>
+                                 ${product.name}
+                                      </h4>
+
+                                       <p>
+                                       Price:
+                                    Rs. ${Number(product.price).toFixed(2)}
+                                     </p>
+
+                                         <p>
+                                         Stock:
+                                     ${product.stock}
+                                      </p>
+
+                                          <p>
+                                           Category:
+                                          ${product.category || "N/A"}
+                                             </p>
+
+                                          <button
+                              type="button"
+                              onclick="editProduct(${product.id})"
+                                  >
+                               ✏️ Edit
+                                </button>
+
+                                             <button
+                                            type="button"
+                                              onclick="deleteProduct(${product.id})"
+                                               >
+                                             🗑️ Delete
+                                            </button>
+
+                                           
+                    </div>
+
+                `,
+          )
+          .join("");
+      }
+
+      // ==========================================
+      // ADD PRODUCT
+      // ==========================================
+
+      document
+        .getElementById("product-form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const name = document.getElementById("product-name").value.trim();
+
+          const description = document
+            .getElementById("product-description")
+            .value.trim();
+
+          const price = document.getElementById("product-price").value;
+
+          const stock = document.getElementById("product-stock").value;
+
+          const category_id = document.getElementById("product-category").value;
+
+          const image_url = document
+            .getElementById("product-image")
+            .value.trim();
+
+          try {
+            const response = await fetch(`${API_URL}/admin/products`, {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/json",
+
+                Authorization: `Bearer ${token}`,
+              },
+
+              body: JSON.stringify({
+                name,
+                description,
+                price,
+                stock,
+                category_id,
+                image_url,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(data.message || "Unable to add product");
+            }
+
+            alert("Product added successfully!");
+
+            document.getElementById("product-form").reset();
+
+            loadProducts();
+          } catch (error) {
+            console.error(error);
+
+            document.getElementById("admin-message").innerHTML = `
+                        <div class="error-message">
+                            ${error.message}
+                        </div>
+                    `;
+          }
+        });
+
+        // ==========================================
+// EDIT PRODUCT
+// ==========================================
+
+async function editProduct(productId) {
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/products`
+        );
+
+        const products = await response.json();
+
+        const product = products.find(
+            p => Number(p.id) === Number(productId)
+        );
+
+        if (!product) {
+
+            alert("Product not found");
+
+            return;
+        }
+
+
+        document.getElementById(
+            "edit-product-section"
+        ).style.display = "block";
+
+
+        document.getElementById(
+            "edit-product-id"
+        ).value = product.id;
+
+
+        document.getElementById(
+            "edit-product-name"
+        ).value = product.name;
+
+
+        document.getElementById(
+            "edit-product-description"
+        ).value = product.description || "";
+
+
+        document.getElementById(
+            "edit-product-price"
+        ).value = product.price;
+
+
+        document.getElementById(
+            "edit-product-stock"
+        ).value = product.stock;
+
+
+        document.getElementById(
+            "edit-product-image"
+        ).value = product.image_url || "";
+
+
+        // Category name ko category ID mein convert karna
+        const categoryMap = {
+    electronics: "1",
+    clothing: "2",
+    shoes: "3"
+};
+
+const categoryName =
+    String(product.category || "")
+        .trim()
+        .toLowerCase();
+
+document.getElementById(
+    "edit-product-category"
+).value =
+    categoryMap[categoryName] || "";
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Unable to load product");
+
+    }
+
+}
+
+// ==========================================
+// SAVE EDITED PRODUCT
+// ==========================================
+
+document
+    .getElementById("edit-product-form")
+    .addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const productId =
+                document.getElementById(
+                    "edit-product-id"
+                ).value;
+
+
+            const name =
+                document.getElementById(
+                    "edit-product-name"
+                ).value.trim();
+
+
+            const description =
+                document.getElementById(
+                    "edit-product-description"
+                ).value.trim();
+
+
+            const price =
+                document.getElementById(
+                    "edit-product-price"
+                ).value;
+
+
+            const stock =
+                document.getElementById(
+                    "edit-product-stock"
+                ).value;
+
+
+            const category_id =
+                document.getElementById(
+                    "edit-product-category"
+                ).value;
+
+
+            const image_url =
+                document.getElementById(
+                    "edit-product-image"
+                ).value.trim();
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/admin/products/${productId}`,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+
+                                "Authorization":
+                                    `Bearer ${token}`
+                            },
+
+                            body: JSON.stringify({
+
+                                category_id:
+                                    Number(category_id),
+
+                                name,
+
+                                description,
+
+                                price:
+                                    Number(price),
+
+                                image_url,
+
+                                stock:
+                                    Number(stock)
+
+                            })
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to update product"
+                    );
+
+                }
+
+
+                alert(
+                    "Product updated successfully!"
+                );
+
+
+                document.getElementById(
+                    "edit-product-form"
+                ).reset();
+
+
+                document.getElementById(
+                    "edit-product-section"
+                ).style.display = "none";
+
+
+                loadProducts();
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                document.getElementById(
+                    "admin-message"
+                ).innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+    );
+
+        // ==========================================
+// DELETE PRODUCT
+// ==========================================
+
+async function deleteProduct(productId) {
+
+    const confirmDelete =
+        confirm("Are you sure you want to delete this product?");
+
+    if (!confirmDelete) {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/admin/products/${productId}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    "Authorization":
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to delete product"
+            );
+
+        }
+
+
+        alert("Product deleted successfully!");
+
+
+        loadProducts();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById(
+            "admin-message"
+        ).innerHTML = `
+            <div class="error-message">
+                ${error.message}
+            </div>
+        `;
+
+    }
+
+}
+
+      // ==========================================
+      // LOGOUT
+      // ==========================================
+
+      function logout() {
+        localStorage.removeItem("shopEasyToken");
+
+        localStorage.removeItem("shopEasyLoggedInUser");
+
+        window.location.href = "login.html";
+      }
+
+      // ==========================================
+      // START
+      // ==========================================
+
+      loadProducts();
+    </script>
+  </body>
+</html>

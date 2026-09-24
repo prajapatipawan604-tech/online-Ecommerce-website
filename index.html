@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ShopEasy - Online Store</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ================================
+         NAVBAR
+    ================================= -->
+
+    <header>
+
+        <nav class="navbar">
+
+            <h1 class="logo">
+                ShopEasy
+            </h1>
+
+            <ul class="nav-links">
+
+                <li>
+                    <a href="#home">
+                        Home
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#products">
+                        Products
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#about">
+                        About
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#contact">
+                        Contact
+                    </a>
+                </li>
+
+                 <li>
+                    <a href="orders.html">My Orders</a>
+                </li>
+
+                <li>
+                    <a href="login.html">
+                        Login
+                    </a>
+                </li>
+
+                <li>
+                    <a href="register.html">
+                        Create Account
+                    </a>
+                </li>
+                <li id="admin-link" style="display: none;">
+                 <a href="admin.html">
+                  Admin
+                </a>
+               </li>
+
+               
+
+            </ul>
+
+            <!-- CART BUTTON -->
+
+            <div class="cart" id="cart-button">
+                🛒 Cart:
+                <span id="cart-count">0</span>
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <!-- ================================
+         HERO
+    ================================= -->
+
+    <section class="hero" id="home">
+
+        <div class="hero-content">
+
+            <h2>
+                Welcome to ShopEasy
+            </h2>
+
+            <p>
+                Find the best products at the best prices.
+            </p>
+
+            <a href="#products" class="shop-btn">
+                Shop Now
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================
+         PRODUCTS
+    ================================= -->
+
+    <section class="products-section" id="products">
+
+        <h2>
+            Our Products
+        </h2>
+
+
+        <!-- SEARCH AND FILTER -->
+
+        <div class="controls">
+
+            <input
+                type="text"
+                id="search"
+                placeholder="Search products..."
+            >
+
+            <select id="category">
+
+                <option value="all">
+                    All Categories
+                </option>
+
+                <option value="electronics">
+                    Electronics
+                </option>
+
+                <option value="clothing">
+                    Clothing
+                </option>
+
+                <option value="shoes">
+                    Shoes
+                </option>
+
+            </select>
+
+        </div>
+
+
+   <!-- PRODUCT CONTAINER -->
+
+<div
+    class="product-container"
+    id="product-container"
+>
+    <p>Loading products...</p>
+</div>
+         
+
+    </section>
+
+
+    <!-- ================================
+         ABOUT
+    ================================= -->
+
+    <section class="about" id="about">
+
+    <h2>
+        About ShopEasy
+    </h2>
+
+    <p>
+        Welcome to ShopEasy — your simple and reliable
+        online shopping destination.
+    </p>
+
+    <p>
+        We bring you a wide range of electronics, clothing,
+        shoes, and everyday products at affordable prices.
+        Our goal is to make online shopping easy, convenient,
+        and enjoyable for everyone.
+    </p>
+
+    <div class="about-features">
+
+        <div class="about-box">
+            <h3>🛍️ Easy Shopping</h3>
+            <p>
+                Browse products, add them to your cart,
+                and place your order with just a few clicks.
+            </p>
+        </div>
+
+        <div class="about-box">
+            <h3>💰 Affordable Prices</h3>
+            <p>
+                We aim to provide quality products at prices
+                that offer great value to our customers.
+            </p>
+        </div>
+
+        <div class="about-box">
+            <h3>🔐 Secure Checkout</h3>
+            <p>
+                We are building a safe and reliable checkout
+                experience for every ShopEasy customer.
+            </p>
+        </div>
+
+        <div class="about-box">
+            <h3>❤️ Customer First</h3>
+            <p>
+                Our focus is to make your shopping experience
+                simple, smooth, and convenient.
+            </p>
+        </div>
+
+    </div>
+
+</section>
+
+
+    <!-- ================================
+         CONTACT
+    ================================= -->
+
+    <section class="contact" id="contact">
+
+        <h2>
+            Contact Us
+        </h2>
+
+        <p>
+            Email: online@shopeasy.com
+        </p>
+
+        <p>
+            Phone: +977 9801212121
+        </p>
+
+    </section>
+
+
+    <!-- ================================
+         CART MODAL
+    ================================= -->
+
+    <div
+        class="cart-modal"
+        id="cart-modal"
+    >
+
+        <div class="cart-box">
+
+            <button
+                class="close-cart"
+                onclick="closeCart()"
+            >
+                ✕
+            </button>
+
+
+            <h2>
+                Your Cart
+            </h2>
+
+
+            <div id="cart-items">
+                <p>Your cart is empty.</p>
+            </div>
+
+
+            <h3>
+
+                Total:
+                Rs.
+
+                <span id="cart-total">
+                    0
+                </span>
+
+            </h3>
+
+
+            <button
+                class="checkout-btn"
+                onclick="checkout()"
+            >
+                Checkout
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================
+         FOOTER
+    ================================= -->
+
+   <footer class="site-footer">
+
+    <div class="footer-container">
+
+        <div class="footer-brand">
+            <h2>ShopEasy</h2>
+            <p>
+                Simple shopping. Better choices.
+                Your trusted online shopping destination.
+            </p>
+        </div>
+
+        <div class="footer-links">
+            <h3>Quick Links</h3>
+
+            <a href="#home">Home</a>
+            <a href="#products">Products</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+            <a href="orders.html">My Orders</a>
+        </div>
+
+        <div class="footer-help">
+            <h3>Customer Support</h3>
+
+            <p>📧 support@shopeasy.com</p>
+            <p>📞 +977 98XXXXXXXX</p>
+            <p>🕒 Mon - Sat: 9 AM - 6 PM</p>
+        </div>
+
+        <div class="footer-social">
+            <h3>Follow Us</h3>
+
+            <a href="#">Facebook</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>
+            © 2026 ShopEasy. All rights reserved.
+        </p>
+
+        <p>
+            🔐 Secure & Reliable Shopping
+        </p>
+    </div>
+
+</footer>
+
+<!-- ==========================================
+     NEPAL WATCH
+========================================== -->
+<script src="https://cdn.jsdelivr.net/npm/@remotemerge/nepali-date-converter@1/dist/ndc-browser.js"></script>
+<div id="nepal-watch">
+
+    <div class="watch-face">
+
+        <div class="number n12">12</div>
+        <div class="number n3">3</div>
+        <div class="number n6">6</div>
+        <div class="number n9">9</div>
+
+        <div id="hour-hand" class="hand hour-hand"></div>
+        <div id="minute-hand" class="hand minute-hand"></div>
+        <div id="second-hand" class="hand second-hand"></div>
+
+        <div class="center-dot"></div>
+
+    </div>
+
+    <div id="watch-time">
+        00:00:00
+    </div>
+
+    <div id="watch-date">
+        🇳🇵 Nepali Date
+    </div>
+
+</div>
+
+
+/* ==========================================
+   🇳🇵 LIVE NEPAL WATCH
+========================================== */
+
+<script src="https://cdn.jsdelivr.net/npm/nepali-date-kit@2"></script>
+<script>
+    
+function updateNepalWatch() {
+
+    const now = new Date();
+
+    // Nepal digital time
+    const timeText = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Kathmandu",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    }).format(now);
+
+    const timeElement = document.getElementById("watch-time");
+
+    if (timeElement) {
+        timeElement.textContent = timeText;
+    }
+
+
+    // Nepal clock values
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Kathmandu",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        hour12: false
+    }).formatToParts(now);
+
+    const hour = Number(
+        parts.find(p => p.type === "hour").value
+    );
+
+    const minute = Number(
+        parts.find(p => p.type === "minute").value
+    );
+
+    const second = Number(
+        parts.find(p => p.type === "second").value
+    );
+
+
+    // Hand angles
+    const hourDegree =
+        (hour % 12) * 30 + minute * 0.5;
+
+    const minuteDegree =
+        minute * 6 + second * 0.1;
+
+    const secondDegree =
+        second * 6;
+
+
+    // Move hands
+    const hourHand =
+        document.getElementById("hour-hand");
+
+    const minuteHand =
+        document.getElementById("minute-hand");
+
+    const secondHand =
+        document.getElementById("second-hand");
+
+
+    if (hourHand) {
+        hourHand.style.transform =
+            `rotate(${hourDegree}deg)`;
+    }
+
+    if (minuteHand) {
+        minuteHand.style.transform =
+            `rotate(${minuteDegree}deg)`;
+    }
+
+    if (secondHand) {
+        secondHand.style.transform =
+            `rotate(${secondDegree}deg)`;
+    }
+}
+
+
+    
+
+
+
+
+/* ==========================================
+   🇳🇵 LIVE NEPALI DATE
+========================================== */
+
+function updateNepaliDate() {
+
+    const dateElement =
+        document.getElementById("watch-date");
+
+    if (!dateElement) return;
+
+    try {
+
+        const now = new Date();
+
+        // Nepali date
+        const nepaliDate =
+            NepaliDateKit.toBs(now);
+
+        // Aaj ka day - Nepal timezone
+        const weekday =
+            new Intl.DateTimeFormat("ne-NP", {
+                timeZone: "Asia/Kathmandu",
+                weekday: "long"
+            }).format(now);
+
+        dateElement.textContent =
+            "🇳🇵 " +
+            nepaliDate +
+            " • " +
+            weekday;
+
+    } catch (error) {
+
+        console.error("Nepali Date Error:", error);
+
+        dateElement.textContent =
+            "🇳🇵 Nepali Date Error";
+    }
+}
+
+updateNepaliDate();
+
+setInterval(updateNepaliDate, 60000);
+
+/* START */
+
+updateNepalWatch();
+
+
+setInterval(updateNepalWatch, 1000);
+
+
+
+
+
+
+</script>
+    
+
+<script src="script.js"></script>
+
+
+</body>
+</html>
+
+  
+
+
+

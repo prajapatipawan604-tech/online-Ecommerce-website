@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Manage Users - ShopEasy</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #111;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 18px 30px;
+        }
+
+        header h2 {
+            margin: 0 0 12px;
+        }
+
+        header nav {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+        }
+
+        header a:hover {
+            color: #ff5a36;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .container h1 {
+            margin-bottom: 25px;
+        }
+
+        .users-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow:
+                0 5px 20px rgba(0, 0, 0, 0.08);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f7f7f7;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .role {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: #eee;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+        }
+
+        .error-message {
+            background: #ffe5e5;
+            color: #c00000;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 25px;
+            color: #666;
+        }
+
+        @media (max-width: 700px) {
+
+            .container {
+                margin: 20px auto;
+            }
+
+            th,
+            td {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+        }
+
+        .user-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.user-filters input,
+.user-filters select {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.user-filters input {
+    flex: 1;
+}
+
+@media (max-width: 700px) {
+
+    .user-filters {
+        flex-direction: column;
+    }
+
+    .user-filters input,
+    .user-filters select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+}
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- ==========================================
+         HEADER
+    =========================================== -->
+
+    <header>
+
+        <h2>
+            ShopEasy Admin
+        </h2>
+
+        <nav>
+
+            <a href="admin.html">
+                Dashboard
+            </a>
+
+            <a href="admin-products.html">
+                Products
+            </a>
+
+            <a href="admin-orders.html">
+                Orders
+            </a>
+
+            <a href="index.html">
+                Home
+            </a>
+
+            <a
+                href="#"
+                onclick="logout()"
+            >
+                Logout
+            </a>
+
+        </nav>
+
+    </header>
+
+
+    <!-- ==========================================
+         MAIN
+    =========================================== -->
+
+    <div class="container">
+
+        <h1>
+            👥 Manage Users
+        </h1>
+
+        <!-- USER SEARCH & FILTER -->
+
+<div class="user-filters">
+
+    <input
+        type="text"
+        id="user-search"
+        placeholder="Search name, email or ID..."
+        oninput="filterUsers()"
+    >
+
+    <select
+        id="role-filter"
+        onchange="filterUsers()"
+    >
+        <option value="All">All Roles</option>
+        <option value="admin">Admin</option>
+        <option value="customer">Customer</option>
+    </select>
+
+</div>
+
+
+        <div class="users-card">
+
+            <div id="users-list">
+
+                <p class="loading">
+                    Loading users...
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
+
+    <script>
+
+        const API_URL =
+            "http://localhost:5000/api";
+
+
+        const token =
+            localStorage.getItem(
+                "shopEasyToken"
+            );
+
+
+        // ==========================================
+        // CHECK LOGIN
+        // ==========================================
+
+        if (!token) {
+
+            alert(
+                "Please login first."
+            );
+
+            window.location.href =
+                "login.html";
+
+        }
+
+
+        // ==========================================
+        // LOAD USERS
+        // ==========================================
+
+        async function loadUsers() {
+
+            const container =
+                document.getElementById(
+                    "users-list"
+                );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/admin/users`,
+                        {
+                            method: "GET",
+
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to load users"
+                    );
+
+                }
+                allUsers = data || [];
+
+
+                displayUsers(data);
+
+
+            } catch (error) {
+
+                console.error(
+                    "Load users error:",
+                    error
+                );
+
+
+                container.innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+
+        // ==========================================
+// USER SEARCH & FILTER
+// ==========================================
+
+let allUsers = [];
+
+
+function filterUsers() {
+
+    const search =
+        document.getElementById("user-search")
+            .value
+            .toLowerCase()
+            .trim();
+
+    const selectedRole =
+        document.getElementById("role-filter")
+            .value;
+
+
+    const filteredUsers =
+        allUsers.filter(user => {
+
+            const matchesSearch =
+
+                String(user.id)
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (user.name || "")
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (user.email || "")
+                    .toLowerCase()
+                    .includes(search);
+
+
+            const matchesRole =
+                selectedRole === "All"
+                ||
+                (user.role || "user") === selectedRole;
+
+
+            return (
+                matchesSearch &&
+                matchesRole
+            );
+
+        });
+
+
+    displayUsers(filteredUsers);
+
+}
+
+
+        // ==========================================
+        // DISPLAY USERS
+        // ==========================================
+
+        function displayUsers(users) {
+
+            const container =
+                document.getElementById(
+                    "users-list"
+                );
+
+
+            if (
+                !users ||
+                users.length === 0
+            ) {
+
+                container.innerHTML = `
+                    <p class="empty-message">
+                        No users found.
+                    </p>
+                `;
+
+                return;
+
+            }
+
+
+            container.innerHTML = `
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                ID
+                            </th>
+
+                            <th>
+                                Name
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Role
+                            </th>
+
+                            <th>
+                                Created
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${users.map(
+                            user => `
+
+                            <tr>
+
+                                <td>
+                                    ${user.id}
+                                </td>
+
+                                <td>
+                                    ${user.name || "N/A"}
+                                </td>
+
+                                <td>
+                                    ${user.email || "N/A"}
+                                </td>
+
+                                <td>
+
+                                    <span class="role">
+                                        ${user.role || "user"}
+                                    </span>
+
+                                </td>
+
+                                <td>
+                                    ${
+                                        user.created_at
+                                            ? new Date(
+                                                user.created_at
+                                            ).toLocaleString()
+                                            : "N/A"
+                                    }
+                                </td>
+
+                            </tr>
+
+                        `
+                        ).join("")}
+
+                    </tbody>
+
+                </table>
+
+            `;
+
+        }
+
+
+        // ==========================================
+        // LOGOUT
+        // ==========================================
+
+        function logout() {
+
+            localStorage.removeItem(
+                "shopEasyToken"
+            );
+
+            localStorage.removeItem(
+                "shopEasyLoggedInUser"
+            );
+
+            window.location.href =
+                "login.html";
+
+        }
+
+
+        // ==========================================
+        // START
+        // ==========================================
+
+        loadUsers();
+
+    </script>
+
+
+</body>
+
+</html>

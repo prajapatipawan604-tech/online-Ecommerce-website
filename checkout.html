@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Checkout - ShopEasy</title>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header>
+      <nav class="navbar">
+        <h1 class="logo">ShopEasy</h1>
+
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="orders.html">My Orders</a></li>
+          <li><a href="index.html#products">Products</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Checkout -->
+    <main class="checkout-container">
+      <h2>Checkout</h2>
+
+      <div class="checkout-grid">
+        <!-- Shipping Address -->
+        <section class="checkout-card">
+          <h3>Shipping Address</h3>
+
+          <form id="checkout-form">
+            <label for="shipping-name"> Full Name </label>
+
+            <input
+              type="text"
+              id="shipping-name"
+              required
+              placeholder="Enter your full name"
+            />
+
+            <label for="shipping-phone"> Phone Number </label>
+
+            <div class="phone-input">
+              <span>+977</span>
+
+              <input
+                type="tel"
+                id="shipping-phone"
+                required
+                maxlength="10"
+                placeholder="98XXXXXXXX"
+              />
+            </div>
+
+            <label for="shipping-address"> Address </label>
+
+            <textarea
+              id="shipping-address"
+              required
+              placeholder="House No, Tole, Street / Area"
+            ></textarea>
+
+            <label for="shipping-city"> City / Municipality </label>
+
+            <input
+              type="text"
+              id="shipping-city"
+              required
+              placeholder="Enter city or municipality"
+            />
+
+            <label for="shipping-district"> District </label>
+
+            <input
+              type="text"
+              id="shipping-district"
+              required
+              placeholder="Enter your district"
+            />
+
+            <label for="shipping-ward"> Ward Number </label>
+
+            <input
+              type="text"
+              id="shipping-ward"
+              required
+              placeholder="Enter ward number"
+            />
+            <label for="shipping-pincode"> Postal Code </label>
+
+            <input
+              type="text"
+              id="shipping-pincode"
+              required
+              placeholder="Enter postal code"
+            />
+          </form>
+        </section>
+
+        <!-- Order Summary -->
+        <section class="checkout-card">
+          <h3>Order Summary</h3>
+
+          <div id="checkout-items">
+            <p>Loading cart...</p>
+          </div>
+
+          <hr />
+
+          <div class="checkout-total">
+            <span>Total</span>
+
+            <strong id="checkout-total"> Rs. 0.00 </strong>
+          </div>
+          <div class="payment-method">
+    <h3>Payment Method</h3>
+
+    <label>
+        <input type="radio" name="paymentMethod" value="cod" checked>
+        Cash on Delivery
+    </label>
+
+    <label>
+        <input type="radio" name="paymentMethod" value="esewa">
+        eSewa
+    </label>
+</div>
+
+          <button type="submit" form="checkout-form" class="checkout-btn">
+            Place Order
+          </button>
+        </section>
+      </div>
+
+      <div id="checkout-message"></div>
+    </main>
+
+    <script>
+      const API_URL = "http://localhost:5000/api";
+
+      // ==========================================
+      // CHECK LOGIN
+      // ==========================================
+
+      const token = localStorage.getItem("shopEasyToken");
+
+      if (!token) {
+        alert("Please login first.");
+
+        window.location.href = "login.html";
+      }
+
+      // ==========================================
+      // LOAD CART
+      // ==========================================
+
+      async function loadCart() {
+        try {
+          const response = await fetch(`${API_URL}/cart`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Unable to load cart");
+          }
+
+          const items = data.items || data;
+
+          displayCart(items);
+        } catch (error) {
+          console.error(error);
+
+          document.getElementById("checkout-items").innerHTML = `
+                    <p>
+                        Unable to load cart.
+                    </p>
+                `;
+        }
+      }
+
+      // ==========================================
+      // DISPLAY CART
+      // ==========================================
+function displayCart(items) {
+
+    const container =
+        document.getElementById("checkout-items");
+
+
+    if (!items || items.length === 0) {
+
+        container.innerHTML = `
+            <p>Your cart is empty.</p>
+        `;
+
+        document.getElementById("checkout-total").textContent =
+            "Rs. 0.00";
+
+
+        const placeOrderButton =
+            document.querySelector(".checkout-btn");
+
+        if (placeOrderButton) {
+            placeOrderButton.disabled = true;
+        }
+
+        return;
+    }
+
+
+    const placeOrderButton =
+        document.querySelector(".checkout-btn");
+
+    if (placeOrderButton) {
+        placeOrderButton.disabled = false;
+    }
+
+
+    let total = 0;
+
+
+    container.innerHTML = items
+        .map((item) => {
+
+            const price =
+                Number(item.price || 0);
+
+            const quantity =
+                Number(item.quantity || 1);
+
+            const subtotal =
+                price * quantity;
+
+            total += subtotal;
+
+
+            return `
+                <div class="checkout-item">
+
+                    <div>
+                        <strong>
+                            ${item.name}
+                        </strong>
+
+                        <p>
+                            Qty: ${quantity}
+                        </p>
+                    </div>
+
+                    <strong>
+                        Rs. ${subtotal.toFixed(2)}
+                    </strong>
+
+                </div>
+            `;
+
+        })
+        .join("");
+
+
+    document.getElementById("checkout-total").textContent =
+        `Rs. ${total.toFixed(2)}`;
+}
+
+
+      
+
+      // ==========================================
+      // PLACE ORDER
+      // ==========================================
+
+      document
+        .getElementById("checkout-form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const shippingName = document
+            .getElementById("shipping-name")
+            .value.trim();
+
+          const shippingPhone = document
+            .getElementById("shipping-phone")
+            .value.trim();
+
+          const shippingAddress = document
+            .getElementById("shipping-address")
+            .value.trim();
+
+          const shippingCity = document
+            .getElementById("shipping-city")
+            .value.trim();
+
+          const shippingDistrict = document
+            .getElementById("shipping-district")
+            .value.trim();
+
+          const shippingWard = document
+            .getElementById("shipping-ward")
+            .value.trim();
+
+          const shippingPincode = document
+            .getElementById("shipping-pincode")
+            .value.trim();
+
+            // ==========================================
+            // EXTRA FORM VALIDATION
+            // ==========================================
+
+           if (!/^[0-9]{10}$/.test(shippingPhone)) {
+
+    document.getElementById("checkout-message").innerHTML = `
+        <div class="error-message">
+            Please enter a valid 10-digit phone number.
+        </div>
+    `;
+
+    return;
+}
+
+
+           if (!/^[0-9]+$/.test(shippingWard)) {
+
+               document.getElementById("checkout-message").innerHTML = `
+               <div class="error-message">
+                  Please enter a valid ward number.
+                </div>
+                `;
+
+              return;
+             }
+
+
+            if (!/^[0-9]+$/.test(shippingPincode)) {
+
+    document.getElementById("checkout-message").innerHTML = `
+        <div class="error-message">
+            Please enter a valid postal code.
+        </div>
+    `;
+
+    return;
+}
+
+            try {
+
+              const paymentMethod =
+    document.querySelector(
+        'input[name="paymentMethod"]:checked'
+    ).value;
+             const response = await fetch(`${API_URL}/checkout`, {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/json",
+
+                Authorization: `Bearer ${token}`,
+              },
+
+          body: JSON.stringify({
+    shipping_name: shippingName,
+    shipping_phone: shippingPhone,
+    shipping_address: shippingAddress,
+    shipping_city: shippingCity,
+    shipping_district: shippingDistrict,
+    shipping_ward: shippingWard,
+    shipping_pincode: shippingPincode,
+    payment_method: paymentMethod
+})
+            });
+
+            const data = await response.json();
+
+if (!response.ok) {
+    throw new Error(
+        data.message || "Unable to place order"
+    );
+
+}
+
+
+// ==========================================
+// ESEWA PAYMENT
+// ==========================================
+
+if (
+    data.paymentRequired === true &&
+    data.paymentUrl &&
+    data.paymentData
+) {
+
+    const form =
+        document.createElement("form");
+
+    form.method = "POST";
+    form.action = data.paymentUrl;
+
+    Object.entries(data.paymentData).forEach(
+        ([key, value]) => {
+
+            const input =
+                document.createElement("input");
+
+            input.type = "hidden";
+            input.name = key;
+            input.value = value;
+
+            form.appendChild(input);
+        }
+    );
+
+    document.body.appendChild(form);
+
+    form.submit();
+
+    return;
+}
+
+
+// ==========================================
+// CASH ON DELIVERY
+// ==========================================
+
+                            alert(
+                        `Order #${data.order.id} placed successfully!`
+                     );
+
+                 window.location.href = "orders.html";
+          } catch (error) {
+            console.error("Checkout error:", error);
+
+            document.getElementById("checkout-message").innerHTML = `
+                        <div class="error-message">
+                            ${error.message}
+                        </div>
+                    `;
+          }
+        });
+
+      // ==========================================
+      // START
+      // ==========================================
+
+      loadCart();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Orders - ShopEasy</title>
+
+   <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 15px;
+        }
+
+        header a {
+            color: white;
+            margin-right: 15px;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .order-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .order-card h3 {
+            margin-top: 0;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #eee;
+        }
+
+        .error-message {
+            color: red;
+            background: #ffe5e5;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .loading {
+            padding: 15px;
+        }
+
+        
+        /* ==========================================
+   ORDER FILTERS
+========================================== */
+
+.order-filters {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.order-filters input,
+.order-filters select {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+.order-filters input {
+    flex: 1;
+    min-width: 220px;
+}
+
+
+/* ==========================================
+   ORDER CARD
+========================================== */
+
+.order-card {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+}
+
+.order-header h3 {
+    margin: 0;
+}
+
+.status-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status-box select {
+    padding: 7px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.status-box button {
+    padding: 7px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #111;
+    color: white;
+    cursor: pointer;
+}
+
+.status-box button:hover {
+    background: #333;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 600px) {
+
+    .container {
+        padding: 12px;
+    }
+
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .order-card {
+        padding: 15px;
+    }
+
+    .status-box {
+        width: 100%;
+    }
+
+    .status-box select,
+    .status-box button {
+        width: 100%;
+    }
+
+}
+    </style>
+</head>
+
+<body>
+
+    <header>
+
+        <h2>ShopEasy Admin</h2>
+
+        <a href="admin.html">
+            Dashboard
+        </a>
+
+        <a href="admin-products.html">
+            Products
+        </a>
+
+       <a href="admin-orders.html">
+         Orders
+        </a>
+
+        <a href="javascript:logout()">
+            Logout
+        </a>
+
+    </header>
+
+
+    <div class="container">
+
+       <h1>Manage Orders</h1>
+
+<!-- ==========================================
+     ORDER SEARCH & FILTER
+========================================== -->
+
+<div class="order-filters">
+
+    <input
+        type="text"
+        id="order-search"
+        placeholder="Search order ID, email, name or phone..."
+        oninput="filterOrders()"
+    >
+
+    <select
+        id="status-filter"
+        onchange="filterOrders()"
+    >
+        <option value="All">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Processing">Processing</option>
+        <option value="Shipped">Shipped</option>
+        <option value="Delivered">Delivered</option>
+    </select>
+
+</div>
+
+
+<div id="orders-list">
+
+    <p class="loading">
+        Loading orders...
+    </p>
+
+</div>
+
+    </div>
+
+
+    <script>
+
+        const API_URL =
+            "http://localhost:5000/api";
+
+
+        const token =
+            localStorage.getItem(
+                "shopEasyToken"
+            );
+
+
+        if (!token) {
+
+            alert(
+                "Please login first."
+            );
+
+            window.location.href =
+                "login.html";
+
+        }
+
+
+        // ==========================================
+        // LOAD ALL ORDERS
+        // ==========================================
+
+        async function loadOrders() {
+
+            const container =
+                document.getElementById(
+                    "orders-list"
+                );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/admin/orders`,
+                        {
+                            method: "GET",
+
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to load orders"
+                    );
+
+                }
+
+
+                displayOrders(data);
+
+
+            } catch (error) {
+
+                console.error(error);
+
+
+                container.innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+
+
+      // ==========================================
+      // DISPLAY ORDERS
+      // ==========================================
+
+let allOrders = [];
+
+
+function displayOrders(orders) {
+
+    allOrders = orders || [];
+
+    renderOrders(allOrders);
+
+}
+
+
+// ==========================================
+// FILTER ORDERS
+// ==========================================
+
+function filterOrders() {
+
+    const search =
+        document.getElementById(
+            "order-search"
+        ).value
+        .toLowerCase()
+        .trim();
+
+
+    const selectedStatus =
+        document.getElementById(
+            "status-filter"
+        ).value;
+
+
+    const filteredOrders =
+        allOrders.filter(order => {
+
+            const matchesSearch =
+
+                String(order.id)
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (order.email || "")
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (order.shipping_name || "")
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (order.shipping_phone || "")
+                    .toLowerCase()
+                    .includes(search);
+
+
+            const matchesStatus =
+                selectedStatus === "All"
+                ||
+                order.status === selectedStatus;
+
+
+            return (
+                matchesSearch &&
+                matchesStatus
+            );
+
+        });
+
+
+    renderOrders(filteredOrders);
+
+}
+
+
+// ==========================================
+// RENDER ORDERS
+// ==========================================
+
+function renderOrders(orders) {
+
+    const container =
+        document.getElementById(
+            "orders-list"
+        );
+
+
+    if (
+        !orders ||
+        orders.length === 0
+    ) {
+
+        container.innerHTML =
+            "<p>No orders found.</p>";
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        orders.map(order => `
+
+            <div class="order-card">
+
+                <div class="order-header">
+
+                    <h3>
+                        Order #${order.id}
+                    </h3>
+
+                    <strong>
+                        Rs.
+                        ${Number(
+                            order.total_amount
+                        ).toFixed(2)}
+                    </strong>
+
+                </div>
+
+
+                <p>
+                    <strong>Customer:</strong>
+                    ${order.email || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Name:</strong>
+                    ${order.shipping_name || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Phone:</strong>
+                    ${order.shipping_phone || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Address:</strong>
+                    ${order.shipping_address || "N/A"}
+                </p>
+
+                <p>
+                    <strong>City:</strong>
+                    ${order.shipping_city || "N/A"}
+                </p>
+
+                <p>
+                    <strong>District:</strong>
+                    ${order.shipping_district || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Ward:</strong>
+                    ${order.shipping_ward || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Pincode:</strong>
+                    ${order.shipping_pincode || "N/A"}
+                </p>
+
+
+                <div class="status-box">
+
+                    <strong>Status:</strong>
+
+                    <select
+                        id="status-${order.id}"
+                    >
+
+                        <option
+                            value="Pending"
+                            ${order.status === "Pending"
+                                ? "selected"
+                                : ""}
+                        >
+                            Pending
+                        </option>
+
+                        <option
+                            value="Processing"
+                            ${order.status === "Processing"
+                                ? "selected"
+                                : ""}
+                        >
+                            Processing
+                        </option>
+
+                        <option
+                            value="Shipped"
+                            ${order.status === "Shipped"
+                                ? "selected"
+                                : ""}
+                        >
+                            Shipped
+                        </option>
+
+                        <option
+                            value="Delivered"
+                            ${order.status === "Delivered"
+                                ? "selected"
+                                : ""}
+                        >
+                            Delivered
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        type="button"
+                        onclick="updateOrderStatus(${order.id})"
+                    >
+                        Update Status
+                    </button>
+
+                </div>
+
+
+                <p>
+                    <strong>Created:</strong>
+                    ${new Date(
+                        order.created_at
+                    ).toLocaleString()}
+                </p>
+
+            </div>
+
+        `).join("");
+
+}
+        // ==========================================
+// UPDATE ORDER STATUS
+// ==========================================
+
+async function updateOrderStatus(orderId) {
+
+    const statusSelect =
+        document.getElementById(
+            `status-${orderId}`
+        );
+
+    const status =
+        statusSelect.value;
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/admin/orders/${orderId}/status`,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json",
+
+                    "Authorization":
+                        `Bearer ${token}`
+                },
+
+                body: JSON.stringify({
+                    status: status
+                })
+            }
+        );
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to update order status"
+            );
+
+        }
+
+        alert(
+            "Order status updated successfully!"
+        );
+
+        loadOrders();
+
+    } catch (error) {
+
+        console.error(
+            "Update status error:",
+            error
+        );
+
+        alert(
+            error.message
+        );
+
+    }
+}
+
+
+
+        // ==========================================
+        // LOGOUT
+        // ==========================================
+
+        function logout() {
+
+            localStorage.removeItem(
+                "shopEasyToken"
+            );
+
+            localStorage.removeItem(
+                "shopEasyLoggedInUser"
+            );
+
+            window.location.href =
+                "login.html";
+
+        }
+
+
+        // ==========================================
+        // START
+        // ==========================================
+
+        loadOrders();
+
+    </script>
+
+</body>
+</html>

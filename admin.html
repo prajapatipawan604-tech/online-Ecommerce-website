@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Dashboard - ShopEasy</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="admin-page">
+
+    <header>
+        <h1>ShopEasy Admin</h1>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="orders.html">My Orders</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </nav>
+    </header>
+
+
+    <main class="admin-container">
+
+        <h2>Admin Dashboard</h2>
+
+        <div id="admin-message"></div>
+
+        <div class="admin-welcome">
+            <h3>Welcome, Admin 👋</h3>
+            <p>
+                You have successfully accessed the admin dashboard.
+            </p>
+        </div>
+
+        <!-- ================================
+     ADMIN SUMMARY
+================================= -->
+
+<div class="admin-stats">
+
+    <div class="admin-stat-card">
+        <h3>📦 Total Products</h3>
+        <p id="total-products">0</p>
+    </div>
+
+    <div class="admin-stat-card">
+        <h3>🛒 Total Orders</h3>
+        <p id="total-orders">0</p>
+    </div>
+
+    <div class="admin-stat-card">
+        <h3>👥 Total Users</h3>
+        <p id="total-users">0</p>
+    </div>
+
+    <div class="admin-stat-card">
+        <h3>💰 Total Sales</h3>
+        <p id="total-sales">Rs. 0.00</p>
+    </div>
+
+</div>
+
+        <div class="admin-actions">
+
+    <div class="admin-action-card">
+
+        <h3>📦 Manage Products</h3>
+
+        <p>
+            Add, edit and delete products.
+        </p>
+
+        <button onclick="window.location.href='admin-products.html'">
+            Manage Products
+        </button>
+
+    </div>
+
+
+    <div class="admin-action-card">
+
+        <h3>🛒 Manage Orders</h3>
+
+        <p>
+            View and manage customer orders.
+        </p>
+
+        <button onclick="window.location.href='admin-orders.html'">
+            Manage Orders
+        </button>
+
+    </div>
+
+
+    <div class="admin-action-card">
+
+        <h3>👥 Manage Users</h3>
+
+        <p>
+            View registered users.
+        </p>
+
+        <button onclick="window.location.href='admin-users.html'">
+            Manage Users
+        </button>
+
+    </div>
+
+</div>
+
+    </main>
+
+
+    <script>
+
+        const API_URL = "http://localhost:5000/api";
+
+
+        // ==========================================
+        // CHECK ADMIN
+        // ==========================================
+
+        const token =
+            localStorage.getItem("shopEasyToken");
+
+
+        if (!token) {
+
+            alert("Please login first.");
+
+            window.location.href = "login.html";
+
+        }
+
+
+        async function checkAdmin() {
+
+            try {
+
+                const response = await fetch(
+                    `${API_URL}/admin/test`,
+                    {
+                        headers: {
+                            "Authorization":
+                                `Bearer ${token}`
+                        }
+                    }
+                );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Admin access denied"
+                    );
+
+                }
+
+
+                console.log(
+                    "Admin access:",
+                    data
+                );
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                document.getElementById(
+                    "admin-message"
+                ).innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+
+
+        function logout() {
+
+            localStorage.removeItem(
+                "shopEasyToken"
+            );
+
+            localStorage.removeItem(
+                "shopEasyLoggedInUser"
+            );
+
+            window.location.href =
+                "login.html";
+        }
+
+        // ==========================================
+// LOAD DASHBOARD STATS
+// ==========================================
+
+async function loadDashboardStats() {
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/admin/stats`,
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization":
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load dashboard stats"
+            );
+
+        }
+
+        document.getElementById(
+            "total-products"
+        ).textContent =
+            data.totalProducts;
+
+        document.getElementById(
+            "total-orders"
+        ).textContent =
+            data.totalOrders;
+
+        document.getElementById(
+            "total-users"
+        ).textContent =
+            data.totalUsers;
+
+        document.getElementById(
+            "total-sales"
+        ).textContent =
+            `Rs. ${Number(
+                data.totalSales
+            ).toFixed(2)}`;
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard stats error:",
+            error
+        );
+
+    }
+
+}
+
+ checkAdmin();
+  loadDashboardStats();
+
+
+    </script>
+
+</body>
+
+</html>
